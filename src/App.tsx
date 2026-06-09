@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Sparkles, Heart, Gift, Settings } from "lucide-react";
+import { Sparkles, Heart, Gift } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { AppConfig, Slide } from "./types";
 import { DEFAULT_CONFIG, decodeConfigFromUrl, encodeConfigToUrl, migrateConfig } from "./data";
@@ -155,7 +155,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Header bar / Title Area */}
-      <header className="w-full flex justify-between items-center px-6 py-4 z-20 select-none">
+      <header className="w-full flex justify-center items-center px-6 py-4 z-20 select-none">
         
         {/* Cute logo signature */}
         <div className="flex items-center space-x-1.5 cursor-pointer" onClick={handleResetCake}>
@@ -164,16 +164,6 @@ export default function App() {
           </div>
           <span className="text-sm font-serif font-semibold text-rose-600">Sweet17✨</span>
         </div>
-
-        {/* Visual Builder Access Button */}
-        <button
-          onClick={() => setIsSettingsOpen(true)}
-          className="flex items-center space-x-1 px-3 py-1.5 bg-white/70 hover:bg-white backdrop-blur-sm border border-pink-200/50 hover:border-pink-300 text-rose-500 rounded-full text-xs font-semibold shadow-sm transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
-          title="Atur Konten & Nomor WhatsApp"
-        >
-          <Settings className="w-3.5 h-3.5 animate-spin-slow text-rose-400" />
-          <span>Edit Kado 🛠️</span>
-        </button>
 
       </header>
 
