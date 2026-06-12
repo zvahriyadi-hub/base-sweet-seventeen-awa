@@ -327,7 +327,7 @@
             </div>
           </div>
           <div class="topbar-right">
-            <button class="vol-btn" id="vol-btn" onclick="toggleMusic()">
+            <button class="vol-btn" id="vol-btn" onclick="toggleMute()">
               <svg id="vol-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-bounce"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
             </button>
             <button class="reset-btn" onclick="handleResetCake()">Tiup Ulang 🎂</button>
@@ -658,27 +658,51 @@ function renderNavDots() {
 function nextSlide() { currentIdx = (currentIdx + 1) % (config.slides.length + 1); isLetterOpen = false; renderSlide(); }
 function prevSlide() { currentIdx = (currentIdx - 1 + config.slides.length + 1) % (config.slides.length + 1); isLetterOpen = false; renderSlide(); }
 
+// ✅ KODE YANG SUDAH DIPERBAIKI
 function startMusic() {
   if (!isPlaying) return;
-
   const audio = document.getElementById("bgMusic");
-  audio.play();
-
-  updateMusicUI(true);
+  audio.play()
+    .then(() => {
+      updateMusicUI(true);
+    })
+    .catch(err => {
+      console.log("Gagal play:", err);
+      isPlaying = false;
+      updateMusicUI(false);
+    });
 }
 
 function stopMusic() {
   const audio = document.getElementById("bgMusic");
-
-audio.play()
-  .then(() => console.log("music playing"))
-  .catch(err => console.log(err));
-
+  audio.pause(); // ✅ DIPERBAIKI: sebelumnya audio.play() → harusnya pause()
   isPlaying = false;
   updateMusicUI(false);
 }
 
-function toggleMusic() { isPlaying = !isPlaying; if (isPlaying) { startMusic(); } else { stopMusic(); } }
+function toggleMusic() {
+  isPlaying = !isPlaying;
+  if (isPlaying) {
+    startMusic();
+  } else {
+    stopMusic();
+  }
+}
+
+// ✅ FUNGSI BARU: Mute / Unmute untuk tombol speaker
+function toggleMute() {
+  const audio = document.getElementById("bgMusic");
+  const volBtn = document.getElementById("vol-btn");
+  audio.muted = !audio.muted;
+
+  if (audio.muted) {
+    volBtn.classList.add("muted");
+    volBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
+  } else {
+    volBtn.classList.remove("muted");
+    volBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-bounce"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`;
+  }
+}
 
 function updateMusicUI(playing) {
   const disc = document.getElementById("music-disc"), volBtn = document.getElementById("vol-btn"), playIcon = document.getElementById("music-play-icon");
