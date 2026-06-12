@@ -205,6 +205,29 @@
     #confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 40; overflow: hidden; }
     .confetti-piece { position: absolute; border-radius: 50%; }
     .yt-player { position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; }
+    /* ===== FLOATING PHOTO BACKGROUND ===== */
+#photo-bg-canvas {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  display: none;
+}
+.bg-photo-item {
+  position: absolute;
+  bottom: -220px;
+  border-radius: 16px;
+  object-fit: cover;
+  opacity: 0;
+  animation: floatPhotoUp linear infinite;
+}
+@keyframes floatPhotoUp {
+  0%   { transform: translateY(0) rotate(var(--rot)); opacity: 0; }
+  10%  { opacity: 0.5; }
+  90%  { opacity: 0.5; }
+  100% { transform: translateY(calc(-100vh - 250px)) rotate(var(--rot)); opacity: 0; }
+}
     svg.icon { display: inline-block; vertical-align: middle; }
   </style>
 </head>
@@ -214,6 +237,9 @@
 <body>
 <div id="hearts-canvas"></div>
 <div id="confetti-canvas"></div>
+<div id="hearts-canvas"></div>
+<div id="confetti-canvas"></div>
+<div id="photo-bg-canvas"></div>  <!-- ✅ TAMBAHKAN INI -->
 <div id="app">
   <header>
       <div class="logo" onclick="handleResetCake()">
@@ -472,6 +498,8 @@ function handleBlowOut() {
   document.getElementById("mic-btn").disabled = true;
   document.getElementById("kiss-btn").disabled = true;
   triggerConfetti();
+  triggerConfetti();
+startPhotoBg(); // ✅ TAMBAHKAN INI 
   setTimeout(() => { showSlideScreen(); }, 1500);
   document.getElementById("bgMusic").play();
 }
@@ -659,13 +687,12 @@ function nextSlide() { currentIdx = (currentIdx + 1) % (config.slides.length + 1
 function prevSlide() { currentIdx = (currentIdx - 1 + config.slides.length + 1) % (config.slides.length + 1); isLetterOpen = false; renderSlide(); }
 
 // ✅ KODE YANG SUDAH DIPERBAIKI
+// ✅ PERBAIKAN: startMusic dengan error handling
 function startMusic() {
   if (!isPlaying) return;
   const audio = document.getElementById("bgMusic");
   audio.play()
-    .then(() => {
-      updateMusicUI(true);
-    })
+    .then(() => { updateMusicUI(true); })
     .catch(err => {
       console.log("Gagal play:", err);
       isPlaying = false;
@@ -673,28 +700,25 @@ function startMusic() {
     });
 }
 
+// ✅ PERBAIKAN: stopMusic menggunakan pause() bukan play()
 function stopMusic() {
   const audio = document.getElementById("bgMusic");
-  audio.pause(); // ✅ DIPERBAIKI: sebelumnya audio.play() → harusnya pause()
+  audio.pause();
   isPlaying = false;
   updateMusicUI(false);
 }
 
+// ✅ Toggle play/pause (tidak berubah)
 function toggleMusic() {
   isPlaying = !isPlaying;
-  if (isPlaying) {
-    startMusic();
-  } else {
-    stopMusic();
-  }
+  if (isPlaying) { startMusic(); } else { stopMusic(); }
 }
 
-// ✅ FUNGSI BARU: Mute / Unmute untuk tombol speaker
+// ✅ BARU: Mute/Unmute untuk tombol speaker
 function toggleMute() {
   const audio = document.getElementById("bgMusic");
   const volBtn = document.getElementById("vol-btn");
   audio.muted = !audio.muted;
-
   if (audio.muted) {
     volBtn.classList.add("muted");
     volBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
@@ -702,6 +726,65 @@ function toggleMute() {
     volBtn.classList.remove("muted");
     volBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-bounce"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`;
   }
+}
+
+// ✅ BARU: Munculkan foto dari bawah ke atas secara acak & looping
+function startPhotoBg() {
+  const canvas = document.getElementById("photo-bg-canvas");
+  canvas.style.display = "block";
+  canvas.innerHTML = "";
+
+  // Kumpulkan semua foto dari slides
+  const photos = config.slides
+    .map(s => s.imageUrl)
+    .filter(url => url && url.length > 10);
+
+  if (photos.length === 0) return;
+
+  const totalItems = 12; // jumlah foto yang melayang sekaligus
+
+  for (let i = 0; i < totalItems; i++) {
+    spawnBgPhoto(canvas, photos, i * (6000 / totalItems));
+  }
+}
+
+function spawnBgPhoto(canvas, photos, initialDelay) {
+  const img = document.createElement("img");
+  img.className = "bg-photo-item";
+
+  // Pilih foto secara acak
+  const src = photos[Math.floor(Math.random() * photos.length)];
+  img.src = src;
+
+  // Ukuran acak: 80px - 160px
+  const size = 80 + Math.floor(Math.random() * 80);
+  img.style.width = size + "px";
+  img.style.height = size + "px";
+
+  // Posisi horizontal acak
+  const leftPct = Math.random() * 95;
+  img.style.left = leftPct + "%";
+
+  // Rotasi acak -15° sampai 15°
+  const rot = (Math.random() * 30 - 15).toFixed(1) + "deg";
+  img.style.setProperty("--rot", rot);
+
+  // Durasi acak: 8s - 16s
+  const dur = 8 + Math.random() * 8;
+  img.style.animationDuration = dur + "s";
+  img.style.animationDelay = initialDelay + "ms";
+
+  // Saat animasi selesai, spawn ulang (looping)
+  img.addEventListener("animationiteration", () => {
+    // Ganti foto dan posisi baru setiap loop
+    img.src = photos[Math.floor(Math.random() * photos.length)];
+    img.style.left = (Math.random() * 95) + "%";
+    const newRot = (Math.random() * 30 - 15).toFixed(1) + "deg";
+    img.style.setProperty("--rot", newRot);
+    img.style.animationDuration = (8 + Math.random() * 8) + "s";
+  });
+
+  canvas.appendChild(img);
 }
 
 function updateMusicUI(playing) {
